@@ -25,7 +25,7 @@ landmarks.forEach(landmark => {
     <h3>${landmark.name}</h3>
     <p>${landmark.description}</p>
     <div id="model-container">
-      <a-scene embedded style="width: 100%; height: 200px;">
+      <a-scene embedded style="width: 100%; height: 200px; ">
         <a-assets>
           <img id="ground" src="assets/cobble.jpg">
           <img id="ground-NRM" src="assets/cobble-nrm.jpg">
@@ -51,7 +51,7 @@ landmarks.forEach(landmark => {
         <a-entity scale="0.5 0.5 0.5" gltf-model="#block"></a-entity>
       </a-scene>
     </div>
-    <a href="ar-viewer.html" target="_blank">Back in time</a>
+    <a href="ar-viewer.html" target="_blank">View in AR</a>
   `;
 
   marker.bindPopup(popupContent);

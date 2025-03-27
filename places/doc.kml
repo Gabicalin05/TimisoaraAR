@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<kml xmlns="http://www.opengis.net/kml/2.2" xmlns:gx="http://www.google.com/kml/ext/2.2" xmlns:kml="http://www.opengis.net/kml/2.2" xmlns:atom="http://www.w3.org/2005/Atom">
+<Document>
+	<name>Three Holy Hierarchs Metropolitan Cathedral.kmz</name>
+	<StyleMap id="__managed_style_0C782C2EC236BC291A05">
+		<Pair>
+			<key>normal</key>
+			<styleUrl>#__managed_style_16012E31D136BC291A05</styleUrl>
+		</Pair>
+		<Pair>
+			<key>highlight</key>
+			<styleUrl>#__managed_style_226876895736BC291A05</styleUrl>
+		</Pair>
+	</StyleMap>
+	<Placemark id="0277FC1F9A36B5BD4311">
+		<name>&quot;Three Holy Hierarchs&quot; Metropolitan Cathedral</name>
+		<LookAt>
+			<longitude>21.2243018</longitude>
+			<latitude>45.75087509999999</latitude>
+			<altitude>0</altitude>
+			<heading>0</heading>
+			<tilt>0</tilt>
+			<range>1641.196185509726</range>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<gx:fovy>35</gx:fovy>
+		</LookAt>
+		<styleUrl>#__managed_style_0C782C2EC236BC291A05</styleUrl>
+		<Point>
+			<altitudeMode>relativeToGround</altitudeMode>
+			<coordinates>21.2243018,45.75087509999999,0</coordinates>
+		</Point>
+		<atom:link rel="app" href="https://www.google.com/earth/about/versions/#earth-pro" title="Google Earth Pro 7.3.6.10201"></atom:link><gx:mid>/m/05cwh2</gx:mid><gx:fid>0x47455d78ad1df08b:0xa6d770774ae8d8f0</gx:fid>
+	</Placemark>
+</Document>
+</kml>
