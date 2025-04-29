@@ -18,6 +18,48 @@ const landmarks = [
   }
 ];
 
+/*
+
+landmark:
+- name : string
+- description : string
+- plate : plate
+- face : ??
+- height : double
+- pins: {pin}
+
+
+coords: relative coords to origin; camera can move away from origin (0, 0, 0). origin is set as the camera's position when the scan starts
+COORDS OF THE PLATE
+direction: relative to a standard set of directional coords (NSEW)
+face: polygon acquired from mapsapi or smth like that, extruded by height
+
+pin: 
+- action : function
+- coords : [double, double, double]
+
+plate: 
+- coords : [double, double, double]
+- direction : [double, double, double]
+- width : double
+
+* direction determined by comparing to a 2d rectangle
+* distance to camera detected by comparing width
+
+* instead of marker use emblema
+
+* maybe use arcube? 
+* detect a specific shape (emblem)
+* read text to determine which item in the db is scanned
+* use as a pivot (like arcube) when visible (changing all params of the landmark); otherwise, the landmark doesn't change
+
+camera:
+- coords : [double, double, double]
+- direction : [double, double, double]
+(position dictated by device sensors)
+
+*/
+
 landmarks.forEach(landmark => {
   const marker = L.marker(landmark.coordinates).addTo(map);
 
