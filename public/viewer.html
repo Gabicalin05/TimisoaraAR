@@ -1,0 +1,38 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AR Viewer</title>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+
+</head>
+<body>
+  <div id="status" style="position: absolute; top: 10px; left: 10px; color: white; font-family: sans-serif; z-index: 999;"></div>
+
+  <a-scene>
+    <a-camera position="0 1.6 2"></a-camera>
+    <a-entity id="sceneRoot"></a-entity>
+  </a-scene>
+
+  <script>
+    const statusDiv = document.getElementById('status');
+    window.addEventListener('DOMContentLoaded', () => {
+      const pos = JSON.parse(localStorage.getItem('stickyCubePos'));
+
+      if (pos) {
+        const cube = document.createElement('a-box');
+        cube.setAttribute('color', '#4CC3D9');
+        cube.setAttribute('depth', '0.3');
+        cube.setAttribute('height', '0.3');
+        cube.setAttribute('width', '0.3');
+        cube.setAttribute('position', `${pos.x} ${pos.y} ${pos.z}`);
+        document.querySelector('#sceneRoot').appendChild(cube);
+
+        statusDiv.textContent = `Blue cube placed at (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`;
+      } else {
+        statusDiv.textContent = "No position stored.";
+      }
+    });
+  </script>
+</body>
+</html>

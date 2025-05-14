@@ -93,7 +93,7 @@ landmarks.forEach(landmark => {
         <a-entity scale="0.5 0.5 0.5" gltf-model="#block"></a-entity>
       </a-scene>
     </div>
-    <a href="ar-viewer.html" target="_blank">View in AR</a>
+    <a href="scanner.html" target="_blank">Scan Building</a>
   `;
 
   marker.bindPopup(popupContent);

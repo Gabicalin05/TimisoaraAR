@@ -1,0 +1,264 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>AR Scanner</title>
+    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/dist/mindar-image.prod.js"></script>
+    <script src="https://aframe.io/releases/1.2.0/aframe.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/gh/hiukim/mind-ar-js@1.1.4/dist/mindar-image-aframe.prod.js"></script>
+    <!-- <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script> -->
+</head>
+<body>
+  <div id="status" style="position: absolute; top: 10px; left: 10px; color: white; font-family: sans-serif; z-index: 999;"></div>
+  <div id="debug-log" style="position: absolute; top: 60px; left: 10px; color: yellow; font-family: monospace; white-space: pre-wrap; z-index: 999;"></div>
+
+  <a-scene mindar-image="imageTargetSrc: assets/markers/targets.mind;" 
+           color-space="sRGB" 
+           renderer="colorManagement: true, physicallyCorrectLights" 
+           vr-mode-ui="enabled: false" 
+           device-orientation-permission-ui="enabled: false">
+
+    <a-assets>
+      <img id="emblem" src="assets/markers/claustru.jpg" />
+    </a-assets>
+
+    <a-camera position="0 0 0" look-controls="enabled: false"></a-camera>
+
+    <a-entity mindar-image-target="targetIndex: 0" id="marker">
+      <a-box id="tracked-cube" position="0 0 0" color="red" depth="0.1" height="0.1" width="0.1"></a-box>
+    </a-entity>
+
+    <a-entity id="world-space-container"></a-entity>
+  </a-scene>
+
+  <script>
+    let isCubePlaced = false;
+    const marker = document.querySelector('#marker');
+    const trackedCube = document.querySelector('#tracked-cube');
+    const container = document.querySelector('#world-space-container');
+    const statusDiv = document.getElementById('status');
+    const debugLog = document.getElementById('debug-log');
+
+    function logToScreen(text) {
+      debugLog.textContent += text + "\n";
+    }
+
+    marker.addEventListener('targetFound', async () => {
+      if (isCubePlaced) return;
+
+      await new Promise(resolve => setTimeout(resolve, 50));
+
+      const position = new THREE.Vector3();
+      const quaternion = new THREE.Quaternion();
+      const scale = new THREE.Vector3();
+
+      trackedCube.object3D.updateMatrixWorld(true);
+      trackedCube.object3D.matrixWorld.decompose(position, quaternion, scale);
+
+      logToScreen(`Original world pos: ${position.x.toFixed(3)}, ${position.y.toFixed(3)}, ${position.z.toFixed(3)}`);
+      logToScreen(`Scale: ${scale.x.toFixed(3)}, ${scale.y.toFixed(3)}, ${scale.z.toFixed(3)}`);
+
+      position.multiplyScalar(0.001); // scale down coordinates to match a-frame
+      container.object3D.updateMatrixWorld(true);
+      container.object3D.worldToLocal(position);
+
+      // Store to local storage
+      localStorage.setItem('stickyCubePos', JSON.stringify(position));
+      logToScreen("Stored position in localStorage.");
+
+      // redirect after short delay
+      statusDiv.textContent = "Position saved! Redirecting to viewer...";
+      isCubePlaced = true;
+
+      setTimeout(() => {
+        window.location.href = 'viewer.html';
+      }, 2000);
+    });
+  </script>
+</body>
+    <!-- <script>
+        const statusElement = document.getElementById('ocr-status');
+
+        const CODE_PATTERNS = {
+            RED_MODEL: /TM[\s\-]*II[\s\-]*m[\s\-]*A[\s\-]*06172/i,    // TM-II-m-A-06172
+            GREEN_MODEL: /TM[\s\-]*I[\s\-]*s[\s\-]*A[\s\-]*06095/i,   // TM-I-s-A-06095
+            FALLBACK: /(06172|06095)/i                                // just numbers
+        };
+
+        let worker;
+        async function initTesseract() {
+            statusElement.textContent = "Loading OCR engine...";
+            worker = await Tesseract.createWorker({
+                logger: m => {
+                    console.log(m);
+                    if (m.status) statusElement.textContent = `OCR: ${m.status}`;
+                }
+            });
+            await worker.loadLanguage('eng');
+            await worker.initialize('eng');
+            await worker.setParameters({
+                tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789- ',
+                preserve_interword_spaces: '1',
+                tessedit_pageseg_mode: '6' 
+            });
+        }
+
+        async function initCamera() {
+            try {
+                statusElement.textContent = "Accessing camera...";
+                const stream = await navigator.mediaDevices.getUserMedia({ 
+                    video: {
+                        facingMode: 'environment',
+                        width: { ideal: 1280 },
+                        height: { ideal: 720 }
+                    } 
+                });
+                const video = document.getElementById('camera-feed');
+                video.srcObject = stream;
+                await new Promise(resolve => {
+                    video.onloadedmetadata = () => {
+                        video.play();
+                        resolve();
+                    };
+                });
+                return true;
+            } catch (err) {
+                console.error("Camera access failed:", err);
+                statusElement.textContent = "Camera access failed";
+                return false;
+            }
+        }
+
+        function preprocessImage(ctx, width, height) {
+            const imageData = ctx.getImageData(0, 0, width, height);
+            const data = imageData.data;
+            
+            for (let i = 0; i < data.length; i += 4) {
+                // grayscale
+                const gray = 0.299 * data[i] + 0.587 * data[i+1] + 0.114 * data[i+2];
+                // contrast
+                const adjusted = Math.min(255, Math.max(0, (gray - 50) * 2));
+                
+                data[i] = data[i+1] = data[i+2] = adjusted;
+            }
+            
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        async function runOCRFromCamera() {
+            const video = document.getElementById("camera-feed");
+            if (!video || video.readyState < 2) {
+                throw new Error("Camera feed not ready");
+            }
+
+            const canvas = document.createElement("canvas");
+            canvas.width = 800; 
+            canvas.height = 600;
+            
+            const ctx = canvas.getContext("2d");
+            
+            // Draw video frame to canvas
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            preprocessImage(ctx, canvas.width, canvas.height);
+            
+            // canvas image
+            const debugCanvas = document.createElement('canvas');
+            debugCanvas.id = 'debug-canvas';
+            debugCanvas.width = canvas.width;
+            debugCanvas.height = canvas.height;
+            debugCanvas.getContext('2d').drawImage(canvas, 0, 0);
+            document.body.appendChild(debugCanvas);
+            
+            const { data: { text } } = await worker.recognize(canvas);
+            return text.trim();
+        }
+
+        function findMatchingCode(text) {
+            // Clean the text first
+            const cleanText = text
+                .replace(/\s+/g, ' ')      // Collapse whitespace
+                .replace(/[^\w\s-]/g, '')  // Remove special chars
+                .trim();
+            
+            console.log("Cleaned text:", cleanText);
+            
+            for (const [model, pattern] of Object.entries(CODE_PATTERNS)) {
+                const match = cleanText.match(pattern);
+                if (match) {
+                    return {
+                        model: model,
+                        matchedText: match[0],
+                        fullText: cleanText
+                    };
+                }
+            }
+            
+            return {
+                model: null,
+                fullText: cleanText
+            };
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            try {
+                await Promise.all([initTesseract(), initCamera()]);
+                
+                const target = document.querySelector("#target");
+                const colorBox = document.querySelector("#color-box");
+                
+                let processing = false;
+                
+                target.addEventListener("targetFound", async () => {
+                    if (processing) return;
+                    processing = true;
+                    
+                    statusElement.textContent = "Target found - processing text...";
+                    console.log("Target found");
+                    
+                    try {
+                        await new Promise(resolve => setTimeout(resolve, 300));
+                        
+                        const ocrText = await runOCRFromCamera();
+                        console.log("Raw OCR Text:", ocrText);
+                        
+                        const result = findMatchingCode(ocrText);
+                        
+                        if (result.model) {
+                            console.log(`Matched ${result.model}: ${result.matchedText}`);
+                            statusElement.textContent = `Matched: ${result.matchedText}`;
+                            
+                            if (result.model === "RED_MODEL") {
+                                colorBox.setAttribute("color", "#FF0000");
+                            } else if (result.model === "GREEN_MODEL") {
+                                colorBox.setAttribute("color", "#00FF00");
+                            }
+                        } else {
+                            console.log("No pattern matched. Full text:", result.fullText);
+                            statusElement.textContent = `No match found. Text: ${result.fullText.substring(0, 30)}...`;
+                            colorBox.setAttribute("color", "#4CC3D9"); // Default
+                        }
+                    } catch (err) {
+                        console.warn("OCR failed", err);
+                        statusElement.textContent = "OCR failed - using default";
+                    } finally {
+                        // Remove debug canvas
+                        const debugCanvas = document.getElementById('debug-canvas');
+                        if (debugCanvas) debugCanvas.remove();
+                        
+                        processing = false;
+                    }
+                });
+
+                target.addEventListener("targetLost", () => {
+                    console.log("Target lost");
+                    statusElement.textContent = "Target lost - ready for detection";
+                });
+                
+                statusElement.textContent = "Ready - point camera at target";
+            } catch (err) {
+                console.error("Initialization failed:", err);
+                statusElement.textContent = "Initialization failed - check console";
+            }
+        });
+    </script> -->
+</html>
